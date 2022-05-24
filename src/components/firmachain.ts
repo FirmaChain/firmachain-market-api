@@ -2,12 +2,11 @@ import moment from "moment";
 import { getAxios } from "./axios";
 import { getLiquidityInfo } from "./liquidityInfo";
 
-const MAINNET_LCD_URL: string = 'https://lcd-mainnet.firmachain.dev:1317';
 const UNSIGNED_DIGITS = 1000000;
 
 export async function getMainnetCirculatingSupply() {
   const supplyPath: string = `/cosmos/bank/v1beta1/supply`;
-  let supply = await getAxios(MAINNET_LCD_URL, supplyPath);
+  let supply = await getAxios(process.env.LCD_URI, supplyPath);
   let totalSupply: number = 0;
   
   for (supply of supply.data.supply) {
@@ -17,7 +16,7 @@ export async function getMainnetCirculatingSupply() {
   }
 
   const accountsPath: string = "/cosmos/auth/v1beta1/accounts";
-  let accounts = await getAxios(MAINNET_LCD_URL, accountsPath);
+  let accounts = await getAxios(process.env.LCD_URI, accountsPath);
   let accountList = [];
   
   accounts.data["accounts"].map((elem) => {

@@ -2,6 +2,9 @@
 /dist
 /node_modules
 
+#enviroment
+.env
+
 # resources
 /public
 

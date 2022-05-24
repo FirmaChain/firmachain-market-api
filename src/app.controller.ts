@@ -25,4 +25,16 @@ export class AppController {
   getErc20Data() {
     return this.appService.getErc20Data();
   }
+
+  @HttpCode(200)
+  @Get('wallet/top20')
+  getTop20AvailableAmountWallet() {
+    return this.appService.getTopAvailableAmountWallet(20);
+  }
+
+  @HttpCode(200)
+  @Get('wallet/top50')
+  getTop50AvailableAmountWallet() {
+    return this.appService.getTopAvailableAmountWallet(50);
+  }
 }

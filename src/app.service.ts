@@ -6,28 +6,40 @@ import { UPBIT_DATA } from './interfaces/interface';
 import { getPrice } from './components/coingecko';
 import { getMainnetCirculatingSupply } from './components/firmachain';
 import { getLiquidityInfo } from './components/liquidityInfo';
+import { ACCOUNT_BALANCES } from './queries/wallet.query';
+import { startFetch } from './components/fetch';
+import { WALLET_AMOUNT } from './dtos/wallet.dto';
 
 @Injectable()
 export class AppService implements OnModuleInit {
   private mainnetDataList: UPBIT_DATA[];
   private erc20DataList: UPBIT_DATA[];
+  private topAvailableWalletList: WALLET_AMOUNT[];
+
+  private mainnetFilePath: string;
+  private erc20FilePath: string;
+  private topAvailableFilePath: string;
 
   private mainnetInterval: NodeJS.Timer = null;
   private erc20Interval: NodeJS.Timer = null;
+  private topAvailableInterval: NodeJS.Timer = null;
 
   private scheduleCycle: number = 0;
+  private topAvailableScheduleCycle: number = 0;
 
   async onModuleInit() {
     console.log("START SERVICE");
 
     // 1000(1 second) * 60 = 1 minute
     this.scheduleCycle = 1000 * 60;
+    this.topAvailableScheduleCycle = 1000 * 60 * 5;
 
+    this.initJsonFile();
     this.loadJsonFile();
 
-    console.log();
     this.startMainnetSchedule();
     this.startErc20Schedule();
+    this.startTopAvailableAmountWalletSchedule();
   }
 
   health(): string {
@@ -41,14 +53,40 @@ export class AppService implements OnModuleInit {
   getErc20Data(): UPBIT_DATA[] {
     return this.erc20DataList["list"];
   }
+  
+  getTopAvailableAmountWallet(len: number): WALLET_AMOUNT[] {
+    return this.topAvailableWalletList["list"].slice(0, len);
+  }
+
+  initJsonFile() {
+    this.mainnetFilePath = './public/mainnet.json';
+    this.erc20FilePath = './public/erc20.json';
+    this.topAvailableFilePath = './public/topAvailable.json';
+
+    const initContents = { list: [] };
+    if (!fs.existsSync(this.mainnetFilePath)) {
+      fs.writeFileSync(this.mainnetFilePath, JSON.stringify(initContents));
+    }
+
+    if (!fs.existsSync(this.erc20FilePath)) {
+      fs.writeFileSync(this.erc20FilePath, JSON.stringify(initContents));
+    }
+
+    if (!fs.existsSync(this.topAvailableFilePath)) {
+      fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(initContents));
+    }
+  }
 
   loadJsonFile() {
     // Initialize Data
-    let mainnetJSON = fs.readFileSync('./public/mainnet.json', { encoding: 'utf-8' });
+    let mainnetJSON = fs.readFileSync(this.mainnetFilePath, { encoding: 'utf-8' });
     this.mainnetDataList = JSON.parse(mainnetJSON);
 
-    let erc20JSON = fs.readFileSync('./public/erc20.json', { encoding: 'utf-8' });
+    let erc20JSON = fs.readFileSync(this.erc20FilePath, { encoding: 'utf-8' });
     this.erc20DataList = JSON.parse(erc20JSON);
+
+    let topAvailableJSON = fs.readFileSync(this.topAvailableFilePath, { encoding: 'utf-8' });
+    this.topAvailableWalletList = JSON.parse(topAvailableJSON);
   }
 
   startMainnetSchedule() {
@@ -59,7 +97,7 @@ export class AppService implements OnModuleInit {
       const supplyInfo = await getMainnetCirculatingSupply();
 
       this.mainnetDataList["list"].map(async (elem: UPBIT_DATA) => {
-        console.log("START PARSING");
+        console.log("[MAINNET][PARSING] START PARSING");
         // PRICE
         const price = await getPrice(elem.currencyCode);
         elem.price = price.data['firmachain'][elem.currencyCode.toLowerCase()];
@@ -75,7 +113,7 @@ export class AppService implements OnModuleInit {
       });
       // WRITE FILE
       fs.writeFileSync('./public/mainnet.json', JSON.stringify(this.mainnetDataList));
-      console.log("SUCCESS WRITE FILE");
+      console.log("[MAINNET][PARSING] SUCCESS WRITE FILE");
     }, this.scheduleCycle);
   }
 
@@ -87,7 +125,7 @@ export class AppService implements OnModuleInit {
       const erc20CiculatingSupply = getLiquidityInfo().erc20;
 
       this.erc20DataList["list"].map(async (elem: UPBIT_DATA) => {
-        console.log("START PARSING");
+        console.log("[ERC20][PARSING] START PARSING");
         // PRICE
         const price = await getPrice(elem.currencyCode);
         elem.price = price.data['firmachain'][elem.currencyCode.toLowerCase()];
@@ -101,8 +139,42 @@ export class AppService implements OnModuleInit {
         elem.lastUpdatedTimestamp = lastUpdatedTimestamp;
       });
       // WRITE FILE
-      fs.writeFileSync('./public/erc20.json', JSON.stringify(this.erc20DataList));
-      console.log("SUCCESS WRITE FILE");
+      fs.writeFileSync(this.erc20FilePath, JSON.stringify(this.erc20DataList));
+      console.log("[ERC20][PARSING] SUCCESS WRITE FILE");
     }, this.scheduleCycle);
+  }
+
+  startTopAvailableAmountWalletSchedule() {
+    this.topAvailableInterval = setInterval(async () => {
+      console.log("[TOP_AVAILABLE][PARSING] START PARSING");
+
+      const fetchData = await startFetch(ACCOUNT_BALANCES.query, ACCOUNT_BALANCES.operationName, ACCOUNT_BALANCES.variables);
+      const accountBalances = fetchData.account_balance;
+      let walletList: WALLET_AMOUNT[] = [];
+      for (let i = 0; i < accountBalances.length; i++) {
+        if (accountBalances[i].coins.length === 0) continue;
+
+        walletList.push({
+          address: accountBalances[i].address,
+          amount: Number(accountBalances[i].coins[0].amount)
+        });
+      }
+      this.topAvailableWalletList["list"] = walletList.sort(this.sortWalletAmount).splice(0, 50);
+      
+      console.log("[TOP_AVAILABLE][PARSING] SUCCESS WRITE FILE");
+      fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(this.topAvailableWalletList));
+    }, this.topAvailableScheduleCycle);
+  }
+
+  private sortWalletAmount(a: WALLET_AMOUNT, b: WALLET_AMOUNT) {
+    if (a.amount > b.amount) {
+      return -1;
+    }
+
+    if (a.amount < b.amount) {
+      return 1;
+    }
+
+    return 0;
   }
 }
