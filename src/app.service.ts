@@ -51,8 +51,16 @@ export class AppService implements OnModuleInit {
     return this.mainnetDataList["list"];
   }
 
+  getMainnetSupplyData(): number {
+    return this.mainnetDataList["list"][0].circulatingSupply;
+  }
+
   getErc20Data(): UPBIT_DATA[] {
     return this.erc20DataList["list"];
+  }
+
+  getErc20SupplyData(): number {
+    return this.erc20DataList["list"][0].circulatingSupply;
   }
   
   getTopAvailableAmountWallet(len: number): WALLET_AMOUNT[] {
@@ -65,6 +73,7 @@ export class AppService implements OnModuleInit {
     return csv;
   }
 
+  getMainnetParamData
   initJsonFile() {
     this.mainnetFilePath = './public/mainnet.json';
     this.erc20FilePath = './public/erc20.json';

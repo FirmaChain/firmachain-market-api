@@ -1,4 +1,4 @@
-import { Controller, Get, HttpCode, Res, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpCode, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { AppService } from './app.service';
 import { UPBIT_DATA } from './interfaces/interface';
@@ -22,9 +22,22 @@ export class AppController {
   }
 
   @HttpCode(200)
+  @Get('mainnet/info/circulating-supply')
+  getMainnetSupplyData(): number {
+    console.log(111);
+    return this.appService.getMainnetSupplyData();
+  }
+
+  @HttpCode(200)
   @Get('erc20/info')
   getErc20Data() {
     return this.appService.getErc20Data();
+  }
+
+  @HttpCode(200)
+  @Get('erc20/info/circulating-supply')
+  getErc20SupplyData(): number {
+    return this.appService.getErc20SupplyData();
   }
 
   @HttpCode(200)
