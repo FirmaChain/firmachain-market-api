@@ -73,7 +73,6 @@ export class AppService implements OnModuleInit {
     return csv;
   }
 
-  getMainnetParamData
   initJsonFile() {
     this.mainnetFilePath = './public/mainnet.json';
     this.erc20FilePath = './public/erc20.json';

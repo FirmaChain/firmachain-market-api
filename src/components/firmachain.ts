@@ -1,6 +1,6 @@
 import moment from "moment";
 import { getAxios } from "./axios";
-import { getLiquidityInfo } from "./liquidityInfo";
+import account from "../../public/account.json";
 
 const UNSIGNED_DIGITS = 1000000;
 
@@ -15,11 +15,8 @@ export async function getMainnetCirculatingSupply() {
     }
   }
 
-  const accountsPath: string = "/cosmos/auth/v1beta1/accounts";
-  let accounts = await getAxios(process.env.LCD_URI, accountsPath);
   let accountList = [];
-  
-  accounts.data["accounts"].map((elem) => {
+  account["accounts"].map((elem) => {
     if (elem["@type"] === "/cosmos.vesting.v1beta1.PeriodicVestingAccount")
       accountList.push(elem);
   });
@@ -43,8 +40,6 @@ export async function getMainnetCirculatingSupply() {
 
   totalVesting /= UNSIGNED_DIGITS;
   expiredVesting /= UNSIGNED_DIGITS;
-
-  totalVesting -= getLiquidityInfo().reserve_value;
 
   let circulatingSupply:number = totalSupply - (totalVesting - expiredVesting);
 

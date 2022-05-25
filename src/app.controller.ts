@@ -24,7 +24,6 @@ export class AppController {
   @HttpCode(200)
   @Get('mainnet/info/circulating-supply')
   getMainnetSupplyData(): number {
-    console.log(111);
     return this.appService.getMainnetSupplyData();
   }
 
