@@ -9,6 +9,7 @@ import { getLiquidityInfo } from './components/liquidityInfo';
 import { ACCOUNT_BALANCES } from './queries/wallet.query';
 import { startFetch } from './components/fetch';
 import { WALLET_AMOUNT } from './dtos/wallet.dto';
+import { jsonToCSV } from './components/json2csv';
 
 @Injectable()
 export class AppService implements OnModuleInit {
@@ -56,6 +57,12 @@ export class AppService implements OnModuleInit {
   
   getTopAvailableAmountWallet(len: number): WALLET_AMOUNT[] {
     return this.topAvailableWalletList["list"].slice(0, len);
+  }
+
+  saveJsonToCSV(len: number) {
+    let data = [...this.topAvailableWalletList["list"].slice(0, len)];
+    const csv = jsonToCSV(data);
+    return csv;
   }
 
   initJsonFile() {

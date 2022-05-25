@@ -1,4 +1,5 @@
-import { Controller, Get, HttpCode, UseInterceptors } from '@nestjs/common';
+import { Controller, Get, HttpCode, Res, UseInterceptors } from '@nestjs/common';
+import { Response } from 'express';
 import { AppService } from './app.service';
 import { UPBIT_DATA } from './interfaces/interface';
 
@@ -36,5 +37,23 @@ export class AppController {
   @Get('wallet/top50')
   getTop50AvailableAmountWallet() {
     return this.appService.getTopAvailableAmountWallet(50);
+  }
+
+  @HttpCode(200)
+  @Get('wallet/top20/csv')
+  downloadTop20CSV(@Res() res: Response) {
+    const csv = this.appService.saveJsonToCSV(20);
+    res.header('Content-Type', 'text/csv');
+    res.attachment('top20.csv');
+    return res.send(csv);
+  }
+
+  @HttpCode(200)
+  @Get('wallet/top50/csv')
+  downloadTop50CSV(@Res() res: Response) {
+    const csv = this.appService.saveJsonToCSV(50);
+    res.header('Content-Type', 'text/csv');
+    res.attachment('top50.csv');
+    return res.send(csv);
   }
 }
