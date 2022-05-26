@@ -9,6 +9,10 @@ export async function getMainnetCirculatingSupply() {
   let supply = await getAxios(process.env.LCD_URI, supplyPath);
   let totalSupply: number = 0;
   
+  const communityPoolPath: string = `/cosmos/distribution/v1beta1/community_pool`;
+  const communityPoolData = await getAxios(process.env.LCD_URI, communityPoolPath);
+  const communityPool = Number(communityPoolData.data.pool[0].amount) / Math.pow(10, 6);
+
   for (supply of supply.data.supply) {
     if (supply["denom"] === "ufct") {
       totalSupply = supply["amount"] / UNSIGNED_DIGITS;
@@ -41,7 +45,7 @@ export async function getMainnetCirculatingSupply() {
   totalVesting /= UNSIGNED_DIGITS;
   expiredVesting /= UNSIGNED_DIGITS;
 
-  let circulatingSupply:number = totalSupply - (totalVesting - expiredVesting);
+  let circulatingSupply:number = totalSupply - (totalVesting - expiredVesting) - communityPool;
 
   return {
     totalSupply,
