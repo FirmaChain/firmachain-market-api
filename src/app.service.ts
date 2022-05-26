@@ -55,6 +55,10 @@ export class AppService implements OnModuleInit {
     return this.mainnetDataList["list"][0].circulatingSupply;
   }
 
+  getMainnetTotalSupplyData(): number {
+    return this.mainnetDataList["list"][0].maxSupply;
+  }
+
   getErc20Data(): UPBIT_DATA[] {
     return this.erc20DataList["list"];
   }

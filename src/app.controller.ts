@@ -28,6 +28,12 @@ export class AppController {
   }
 
   @HttpCode(200)
+  @Get('mainnet/info/total-supply')
+  getMainnetTotalSupplyData(): number {
+    return this.appService.getMainnetTotalSupplyData();
+  }
+
+  @HttpCode(200)
   @Get('erc20/info')
   getErc20Data() {
     return this.appService.getErc20Data();
