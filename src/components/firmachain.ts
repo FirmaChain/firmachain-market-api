@@ -45,7 +45,7 @@ export async function getMainnetCirculatingSupply() {
   totalVesting /= UNSIGNED_DIGITS;
   expiredVesting /= UNSIGNED_DIGITS;
 
-  let circulatingSupply:number = totalSupply - (totalVesting - expiredVesting) - communityPool;
+  let circulatingSupply:number = Number((totalSupply - (totalVesting - expiredVesting) - communityPool).toFixed(6));
 
   return {
     totalSupply,
