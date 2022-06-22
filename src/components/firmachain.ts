@@ -1,6 +1,6 @@
 import moment from 'moment';
 import { getAxios } from './axios';
-import account from '../../public/account.json';
+import account from '../account.json';
 
 const UNSIGNED_DIGITS = 1000000;
 
