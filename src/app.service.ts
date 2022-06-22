@@ -1,5 +1,6 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import * as fs from 'fs';
+import moment from "moment";
 
 import { UPBIT_DATA } from './interfaces/interface';
 
@@ -10,16 +11,19 @@ import { ACCOUNT_BALANCES } from './queries/wallet.query';
 import { startFetch } from './components/fetch';
 import { WALLET_AMOUNT } from './dtos/wallet.dto';
 import { jsonToCSV } from './components/json2csv';
+import { SUPPLY_DATE_DATA } from './dtos/supply.dto';
 
 @Injectable()
 export class AppService implements OnModuleInit {
   private mainnetDataList: UPBIT_DATA[];
   private erc20DataList: UPBIT_DATA[];
   private topAvailableWalletList: WALLET_AMOUNT[];
+  private lastUpdatedSupplyDateData: SUPPLY_DATE_DATA;
 
   private mainnetFilePath: string;
   private erc20FilePath: string;
   private topAvailableFilePath: string;
+  private lastUpdatedSupplyDatePath: string;
 
   private mainnetInterval: NodeJS.Timer = null;
   private erc20Interval: NodeJS.Timer = null;
@@ -27,6 +31,8 @@ export class AppService implements OnModuleInit {
 
   private scheduleCycle: number = 0;
   private topAvailableScheduleCycle: number = 0;
+
+  private beforeDay: number = 0;
 
   async onModuleInit() {
     console.log("START SERVICE");
@@ -48,15 +54,21 @@ export class AppService implements OnModuleInit {
   }
 
   getMainnetData(): UPBIT_DATA[] {
-    return this.mainnetDataList["list"];
+    let mainnetJSON = fs.readFileSync(this.mainnetFilePath, { encoding: 'utf-8' });
+    const mainnetDataList = JSON.parse(mainnetJSON);
+    return mainnetDataList["list"];
   }
 
   getMainnetSupplyData(): number {
-    return this.mainnetDataList["list"][0].circulatingSupply;
+    let mainnetJSON = fs.readFileSync(this.mainnetFilePath, { encoding: 'utf-8' });
+    const mainnetDataList = JSON.parse(mainnetJSON);
+    return mainnetDataList["list"][0].circulatingSupply;
   }
 
   getMainnetTotalSupplyData(): number {
-    return this.mainnetDataList["list"][0].maxSupply;
+    let mainnetJSON = fs.readFileSync(this.mainnetFilePath, { encoding: 'utf-8' });
+    const mainnetDataList = JSON.parse(mainnetJSON);
+    return mainnetDataList["list"][0].maxSupply;
   }
 
   getErc20Data(): UPBIT_DATA[] {
@@ -66,9 +78,11 @@ export class AppService implements OnModuleInit {
   getErc20SupplyData(): number {
     return this.erc20DataList["list"][0].circulatingSupply;
   }
-  
+
   getTopAvailableAmountWallet(len: number): WALLET_AMOUNT[] {
-    return this.topAvailableWalletList["list"].slice(0, len);
+    let topAvailableJSON = fs.readFileSync(this.topAvailableFilePath, { encoding: 'utf-8' });
+    const topAvailableWalletList = JSON.parse(topAvailableJSON);
+    return topAvailableWalletList["list"].slice(0, len);
   }
 
   saveJsonToCSV(len: number) {
@@ -81,8 +95,11 @@ export class AppService implements OnModuleInit {
     this.mainnetFilePath = './public/mainnet.json';
     this.erc20FilePath = './public/erc20.json';
     this.topAvailableFilePath = './public/topAvailable.json';
+    this.lastUpdatedSupplyDatePath = './public/lastUpdatedSupplyDate.json';
 
     const initContents = { list: [] };
+    const initSupplyContents = { lastUpdatedSupplyDate: '' };
+
     if (!fs.existsSync(this.mainnetFilePath)) {
       fs.writeFileSync(this.mainnetFilePath, JSON.stringify(initContents));
     }
@@ -93,6 +110,10 @@ export class AppService implements OnModuleInit {
 
     if (!fs.existsSync(this.topAvailableFilePath)) {
       fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(initContents));
+    }
+
+    if (!fs.existsSync(this.lastUpdatedSupplyDatePath)) {
+      fs.writeFileSync(this.lastUpdatedSupplyDatePath, JSON.stringify(initSupplyContents));
     }
   }
 
@@ -106,33 +127,50 @@ export class AppService implements OnModuleInit {
 
     let topAvailableJSON = fs.readFileSync(this.topAvailableFilePath, { encoding: 'utf-8' });
     this.topAvailableWalletList = JSON.parse(topAvailableJSON);
+
+    let lastUpdatedSupplyDateJSON = fs.readFileSync(this.lastUpdatedSupplyDatePath, { encoding: 'utf-8' });
+    this.lastUpdatedSupplyDateData = JSON.parse(lastUpdatedSupplyDateJSON);
   }
 
   startMainnetSchedule() {
-    // Start Interval
+    // Start interval
     this.mainnetInterval = setInterval(async () => {
-      // TIMESTAMP
       const lastUpdatedTimestamp = Date.now();
-      const supplyInfo = await getMainnetCirculatingSupply();
 
+      const timerDate = moment(new Date()).utcOffset(540);
+      const nowSupplyDate = timerDate.format('YYYYMMDD');
+
+      let supplyInfo = null;
+
+      if (this.lastUpdatedSupplyDateData.lastUpdatedSupplyDate === '' ||
+        this.lastUpdatedSupplyDateData.lastUpdatedSupplyDate !== nowSupplyDate) {
+        console.log("[MAINNET][PARSING] Parse one time");
+        supplyInfo = await getMainnetCirculatingSupply();
+        
+        this.lastUpdatedSupplyDateData.lastUpdatedSupplyDate = nowSupplyDate;
+        fs.writeFileSync(this.lastUpdatedSupplyDatePath, JSON.stringify(this.lastUpdatedSupplyDateData));
+      }
+      
       this.mainnetDataList["list"].map(async (elem: UPBIT_DATA) => {
-        console.log("[MAINNET][PARSING] START PARSING");
-        // PRICE
+        // Every 1 minute
+        console.log("[MAINNET][PARSING] Every 1 minute");
+
         const price = await getPrice(elem.currencyCode);
         elem.price = price.data['firmachain'][elem.currencyCode.toLowerCase()];
-        // 24HOURS
-        elem.accTradePrice24h = price.data['firmachain'][elem.currencyCode.toLowerCase() + '_24h_vol'];
-        // circulatingSupply
-        elem.circulatingSupply = supplyInfo.circulatingSupply;
-        elem.maxSupply = supplyInfo.totalSupply;
-        // Marketcap
         elem.marketCap = elem.price * elem.circulatingSupply;
-        // Update Time
+        elem.accTradePrice24h = price.data['firmachain'][elem.currencyCode.toLowerCase() + '_24h_vol'];
         elem.lastUpdatedTimestamp = lastUpdatedTimestamp;
+
+        if (supplyInfo !== null) {
+          elem.circulatingSupply = supplyInfo.circulatingSupply;
+          elem.maxSupply = supplyInfo.totalSupply;
+        }
       });
-      // WRITE FILE
-      fs.writeFileSync('./public/mainnet.json', JSON.stringify(this.mainnetDataList));
+
+      // Write file
+      fs.writeFileSync(this.mainnetFilePath, JSON.stringify(this.mainnetDataList));
       console.log("[MAINNET][PARSING] SUCCESS WRITE FILE");
+
     }, this.scheduleCycle);
   }
 
@@ -157,9 +195,13 @@ export class AppService implements OnModuleInit {
         // Update Time
         elem.lastUpdatedTimestamp = lastUpdatedTimestamp;
       });
-      // WRITE FILE
-      fs.writeFileSync(this.erc20FilePath, JSON.stringify(this.erc20DataList));
-      console.log("[ERC20][PARSING] SUCCESS WRITE FILE");
+
+      let timerDate = moment(new Date()).utcOffset(540);
+      if (timerDate.hour() === 0 && timerDate.minute() === 0) {
+        // WRITE FILE
+        fs.writeFileSync(this.erc20FilePath, JSON.stringify(this.erc20DataList));
+        console.log("[ERC20][PARSING] SUCCESS WRITE FILE");
+      }
     }, this.scheduleCycle);
   }
 
@@ -179,9 +221,12 @@ export class AppService implements OnModuleInit {
         });
       }
       this.topAvailableWalletList["list"] = walletList.sort(this.sortWalletAmount).splice(0, 50);
-      
-      console.log("[TOP_AVAILABLE][PARSING] SUCCESS WRITE FILE");
-      fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(this.topAvailableWalletList));
+
+      let timerDate = moment(new Date()).utcOffset(540);
+      if (timerDate.hour() === 0 && timerDate.minute() < 5) {
+        console.log("[TOP_AVAILABLE][PARSING] SUCCESS WRITE FILE");
+        fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(this.topAvailableWalletList));
+      }
     }, this.topAvailableScheduleCycle);
   }
 
