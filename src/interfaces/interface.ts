@@ -9,3 +9,14 @@ export class UPBIT_DATA {
   provider: string
   lastUpdatedTimestamp: number
 }
+
+export class ACCOUNT_DATA {
+  address: string;
+  account_number: string;
+  sequence: string;
+}
+
+export class ADDRESS_DATA {
+  address: string;
+  amount: number;
+}
