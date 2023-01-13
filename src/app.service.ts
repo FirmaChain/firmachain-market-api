@@ -7,12 +7,9 @@ import { UPBIT_DATA } from './interfaces/interface';
 import { getPrice } from './components/coingecko';
 import { getMainnetCirculatingSupply } from './components/firmachain';
 import { getLiquidityInfo } from './components/liquidityInfo';
-import { ACCOUNT_BALANCES } from './queries/wallet.query';
-import { startFetch } from './components/fetch';
 import { WALLET_AMOUNT } from './dtos/wallet.dto';
 import { jsonToCSV } from './components/json2csv';
 import { SUPPLY_DATE_DATA } from './dtos/supply.dto';
-import FirmaUtil from './components/firmaUtil';
 import FirmaUtils from './components/firmaUtil';
 
 @Injectable()
@@ -151,7 +148,6 @@ export class AppService implements OnModuleInit {
 
         if (priceData === null) continue;
 
-        console.log(priceData);
         const price = priceData[currencyCode.toLowerCase()];
         const vol24h = priceData[`${currencyCode.toLowerCase()}_24h_vol`];
         const marketCaps = price * elem.circulatingSupply;
@@ -244,16 +240,12 @@ export class AppService implements OnModuleInit {
       console.log("[TOP_AVAILABLE][PARSING] START PARSING");
 
       const firmaUtils = await FirmaUtils();
-      console.time("available time check");
       const addressList = await firmaUtils.getAddressList();
-      console.timeEnd("available time check");
       this.topAvailableWalletList["list"] = addressList;
 
-      let timerDate = moment(new Date()).utcOffset(540);
-      if (timerDate.hour() === 0 && timerDate.minute() < 5) {
-        console.log("[TOP_AVAILABLE][PARSING] SUCCESS WRITE FILE");
-        fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(this.topAvailableWalletList));
-      }
+      console.log("[TOP_AVAILABLE][PARSING] SUCCESS WRITE FILE");
+      fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(this.topAvailableWalletList));
+
     }, this.topAvailableScheduleCycle);
   }
 }
