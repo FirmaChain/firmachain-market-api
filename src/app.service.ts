@@ -7,21 +7,16 @@ import { UPBIT_DATA } from './interfaces/interface';
 import { getPrice } from './components/coingecko';
 import { getMainnetCirculatingSupply } from './components/firmachain';
 import { getLiquidityInfo } from './components/liquidityInfo';
-import { WALLET_AMOUNT } from './dtos/wallet.dto';
-import { jsonToCSV } from './components/json2csv';
 import { SUPPLY_DATE_DATA } from './dtos/supply.dto';
-import FirmaUtils from './components/firmaUtil';
 
 @Injectable()
 export class AppService implements OnModuleInit {
   private mainnetDataList: UPBIT_DATA[];
   private erc20DataList: UPBIT_DATA[];
-  private topAvailableWalletList: WALLET_AMOUNT[];
   private lastUpdatedSupplyDateData: SUPPLY_DATE_DATA;
 
   private mainnetFilePath: string;
   private erc20FilePath: string;
-  private topAvailableFilePath: string;
   private lastUpdatedSupplyDatePath: string;
 
   private mainnetInterval: NodeJS.Timer = null;
@@ -29,21 +24,18 @@ export class AppService implements OnModuleInit {
   private topAvailableInterval: NodeJS.Timer = null;
 
   private scheduleCycle: number = 0;
-  private topAvailableScheduleCycle: number = 0;
 
   async onModuleInit() {
     console.log("START SERVICE");
 
     // 1000(1 second) * 60 = 1 minute
     this.scheduleCycle = 1000 * 120;
-    this.topAvailableScheduleCycle = 1000 * 60 * 60;
-    
+
     this.initJsonFile();
     this.loadJsonFile();
 
     this.startMainnetSchedule();
     this.startErc20Schedule();
-    this.startTopAvailableAmountWalletSchedule();
   }
 
   health(): string {
@@ -76,22 +68,9 @@ export class AppService implements OnModuleInit {
     return this.erc20DataList["list"][0].circulatingSupply;
   }
 
-  getTopAvailableAmountWallet(len: number): WALLET_AMOUNT[] {
-    let topAvailableJSON = fs.readFileSync(this.topAvailableFilePath, { encoding: 'utf-8' });
-    const topAvailableWalletList = JSON.parse(topAvailableJSON);
-    return topAvailableWalletList["list"].slice(0, len);
-  }
-
-  saveJsonToCSV(len: number) {
-    let data = [...this.topAvailableWalletList["list"].slice(0, len)];
-    const csv = jsonToCSV(data);
-    return csv;
-  }
-
   initJsonFile() {
     this.mainnetFilePath = './public/mainnet.json';
     this.erc20FilePath = './public/erc20.json';
-    this.topAvailableFilePath = './public/topAvailable.json';
     this.lastUpdatedSupplyDatePath = './public/lastUpdatedSupplyDate.json';
 
     const initContents = { list: [] };
@@ -104,10 +83,6 @@ export class AppService implements OnModuleInit {
       fs.writeFileSync(this.erc20FilePath, JSON.stringify(initContents));
     }
 
-    if (!fs.existsSync(this.topAvailableFilePath)) {
-      fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(initContents));
-    }
-    
     if (!fs.existsSync(this.lastUpdatedSupplyDatePath)) {
       fs.writeFileSync(this.lastUpdatedSupplyDatePath, JSON.stringify(initSupplyContents));
     }
@@ -120,10 +95,7 @@ export class AppService implements OnModuleInit {
 
     let erc20JSON = fs.readFileSync(this.erc20FilePath, { encoding: 'utf-8' });
     this.erc20DataList = JSON.parse(erc20JSON);
-
-    let topAvailableJSON = fs.readFileSync(this.topAvailableFilePath, { encoding: 'utf-8' });
-    this.topAvailableWalletList = JSON.parse(topAvailableJSON);
-
+    
     let lastUpdatedSupplyDateJSON = fs.readFileSync(this.lastUpdatedSupplyDatePath, { encoding: 'utf-8' });
     this.lastUpdatedSupplyDateData = JSON.parse(lastUpdatedSupplyDateJSON);
   }
@@ -136,7 +108,7 @@ export class AppService implements OnModuleInit {
       for (let i = 0; i < mainnetDatas.length; i++) {
         const elem: UPBIT_DATA = mainnetDatas[i];
         const currencyCode = elem.currencyCode;
-        
+
         let priceData = null;
 
         try {
@@ -199,17 +171,17 @@ export class AppService implements OnModuleInit {
     this.erc20Interval = setInterval(async () => {
 
       const erc20Datas = this.erc20DataList["list"];
-      
+
       for (let i = 0; i < erc20Datas.length; i++) {
         const elem: UPBIT_DATA = erc20Datas[i];
         const currencyCode = elem.currencyCode;
-        
+
         let priceData = null;
         try {
           priceData = (await getPrice(currencyCode)).data['firmachain'];
         } catch (e) {
           console.log(`[ERC20] Error - getPrice : ${e}`);
-          continue ;
+          continue;
         }
 
         if (priceData === null) continue;
@@ -228,24 +200,10 @@ export class AppService implements OnModuleInit {
         elem.lastUpdatedTimestamp = lastUpdatedTimestamp;
         elem.circulatingSupply = erc20CiculatingSupply;
       }
-      
+
       fs.writeFileSync(this.erc20FilePath, JSON.stringify(this.erc20DataList));
       console.log("[ERC20][PARSING] SUCCESS WRITE FILE");
 
     }, this.scheduleCycle);
-  }
-
-  startTopAvailableAmountWalletSchedule() {
-    this.topAvailableInterval = setInterval(async () => {
-      console.log("[TOP_AVAILABLE][PARSING] START PARSING");
-
-      const firmaUtils = await FirmaUtils();
-      const addressList = await firmaUtils.getAddressList();
-      this.topAvailableWalletList["list"] = addressList;
-
-      console.log("[TOP_AVAILABLE][PARSING] SUCCESS WRITE FILE");
-      fs.writeFileSync(this.topAvailableFilePath, JSON.stringify(this.topAvailableWalletList));
-
-    }, this.topAvailableScheduleCycle);
   }
 }

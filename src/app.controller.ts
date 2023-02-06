@@ -44,34 +44,4 @@ export class AppController {
   getErc20SupplyData(): number {
     return this.appService.getErc20SupplyData();
   }
-
-  @HttpCode(200)
-  @Get('wallet/top20')
-  getTop20AvailableAmountWallet() {
-    return this.appService.getTopAvailableAmountWallet(20);
-  }
-
-  @HttpCode(200)
-  @Get('wallet/top50')
-  getTop50AvailableAmountWallet() {
-    return this.appService.getTopAvailableAmountWallet(50);
-  }
-
-  @HttpCode(200)
-  @Get('wallet/top20/csv')
-  downloadTop20CSV(@Res() res: Response) {
-    const csv = this.appService.saveJsonToCSV(20);
-    res.header('Content-Type', 'text/csv');
-    res.attachment('top20.csv');
-    return res.send(csv);
-  }
-
-  @HttpCode(200)
-  @Get('wallet/top50/csv')
-  downloadTop50CSV(@Res() res: Response) {
-    const csv = this.appService.saveJsonToCSV(50);
-    res.header('Content-Type', 'text/csv');
-    res.attachment('top50.csv');
-    return res.send(csv);
-  }
 }
