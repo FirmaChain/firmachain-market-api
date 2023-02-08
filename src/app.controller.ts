@@ -1,47 +1,52 @@
-import { Controller, Get, HttpCode, Res } from '@nestjs/common';
-import { Response } from 'express';
-import { AppService } from './app.service';
-import { UPBIT_DATA } from './interfaces/interface';
+import { Controller, Get, HttpCode } from '@nestjs/common';
+import { Erc20MarketService } from './erc20-market/erc20-market.service';
+import { MainnetMarketService } from './mainnet-market/mainnet-market.service';
 
 @Controller('api')
 export class AppController {
   constructor(
-    private readonly appService: AppService
+    private readonly mainnetMarketService: MainnetMarketService,
+    private readonly erc20MarketService: Erc20MarketService
   ) {}
 
   @HttpCode(200)
   @Get('health')
   health(): string {
-    return this.appService.health();
+    return 'healthcheck';
   }
 
+  @Get('mainnet/refresh-data')
+  async refreshMainnetData() {
+    return await this.mainnetMarketService.setMarketData();
+  }
+  
   @HttpCode(200)
   @Get('mainnet/info')
-  getMainnetData(): UPBIT_DATA[] {
-    return this.appService.getMainnetData();
+  async getMainnetData() {
+    return await this.mainnetMarketService.getMarketData();
   }
 
   @HttpCode(200)
   @Get('mainnet/info/circulating-supply')
-  getMainnetSupplyData(): number {
-    return this.appService.getMainnetSupplyData();
+  async getMainnetSupplyData() {
+    return await this.mainnetMarketService.getCirculatingSupply();
   }
 
   @HttpCode(200)
   @Get('mainnet/info/total-supply')
-  getMainnetTotalSupplyData(): number {
-    return this.appService.getMainnetTotalSupplyData();
+  async getMainnetMaxSupplyData() {
+    return await this.mainnetMarketService.getMaxSupply();
   }
 
   @HttpCode(200)
   @Get('erc20/info')
-  getErc20Data() {
-    return this.appService.getErc20Data();
+  async getErc20Data() {
+    return await this.erc20MarketService.getMarketData();
   }
 
   @HttpCode(200)
   @Get('erc20/info/circulating-supply')
-  getErc20SupplyData(): number {
-    return this.appService.getErc20SupplyData();
+  async getErc20SupplyData() {
+    return await this.erc20MarketService.getCirculatingSupply();
   }
 }

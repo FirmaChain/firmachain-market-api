@@ -3,7 +3,9 @@
 /node_modules
 
 #enviroment
-.env
+.env.production
+.env.development
+.env.test
 
 # resources
 /public
