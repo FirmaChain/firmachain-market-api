@@ -1,42 +1,42 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { MainnetMarketService } from 'src/mainnet-market/mainnet-market.service';
+import { ChainMarketService } from 'src/chain-market/chain-market.service';
 
 @Injectable()
 export class MarketSchedulerService {
-  private mainnetInterval: NodeJS.Timer = null;
+  private chainInterval: NodeJS.Timer = null;
   private erc20Interval: NodeJS.Timer = null;
   
-  private mainnetIntervalTime: number = 0;
+  private chainIntervalTime: number = 0;
   private erc20IntervalTime: number = 0;
 
   constructor(
-    private readonly mainnetMarketService: MainnetMarketService,
+    private readonly chainMarketService: ChainMarketService,
     private readonly configService: ConfigService
   ) {
     console.log("✅ START MARKET SERVICE ✅");
 
-    this.mainnetIntervalTime = this.configService.get("MAINNET_INTERVAL_TIME");
+    this.chainIntervalTime = this.configService.get("CHAIN_INTERVAL_TIME");
     this.erc20IntervalTime = this.configService.get("ERC20_INTERVAL_TIME");
 
-    this.startMainnetInterval();
-    this.startErc20Interval();
+    this.startChainInterval();
+    this.startErc20SupplyInterval();
   }
 
-  startMainnetInterval() {
-    this.mainnetInterval = setInterval(async () => {
+  startChainInterval() {
+    this.chainInterval = setInterval(async () => {
       try {
         console.log("🟦 START SCHEDULE - Mainnet 🟦");
 
-        await this.mainnetMarketService.setMarketData();
+        await this.chainMarketService.setMarketData();
       } catch (e) {
         console.log(e);
       }
-    }, this.mainnetIntervalTime * 1000);
+    }, this.chainIntervalTime * 1000);
   }
 
-  startErc20Interval() {
+  startErc20SupplyInterval() {
     this.erc20Interval = setInterval(async () => {
       try {
         console.log("🟫 START SCHEDULE - Erc20 🟫");
@@ -48,11 +48,11 @@ export class MarketSchedulerService {
     }, this.erc20IntervalTime * 1000);
   }
 
-  stopMainnetInterval() {
-    clearInterval(this.mainnetInterval);
+  stopChainSupplyInterval() {
+    clearInterval(this.chainInterval);
   }
 
-  stopErc20Interval() {
+  stopErc20SupplyInterval() {
     clearInterval(this.erc20Interval);
   }
 }

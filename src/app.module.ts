@@ -5,9 +5,10 @@ import Joi from "@hapi/joi";
 
 import { AppController } from './app.controller';
 import { LoggerMiddleware } from './middlewares/LoggerMiddleware';
-import { MainnetMarketService } from './mainnet-market/mainnet-market.service';
+import { ChainMarketService } from './chain-market/chain-market.service';
 import { MarketSchedulerModule } from './market-scheduler/market-scheduler.module';
 import { Erc20MarketService } from './erc20-market/erc20-market.service';
+import { ChainSupplyService } from './chain-supply/chain-supply.service';
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { Erc20MarketService } from './erc20-market/erc20-market.service';
         PORT: Joi.string().required(),
         CODE: Joi.string().required(),
         LCD_URI: Joi.string().required(),
-        MAINNET_INTERVAL_TIME: Joi.string().required(),
+        CHAIN_INTERVAL_TIME: Joi.string().required(),
         ERC20_INTERVAL_TIME: Joi.string().required(),
       }),
     }),
@@ -29,8 +30,9 @@ import { Erc20MarketService } from './erc20-market/erc20-market.service';
     AppController,
   ],
   providers: [
-    MainnetMarketService,
-    Erc20MarketService
+    ChainMarketService,
+    Erc20MarketService,
+    ChainSupplyService
   ]
 })
 export class AppModule {

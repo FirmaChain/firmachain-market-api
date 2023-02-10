@@ -7,7 +7,7 @@ function createAxios(url: string) {
       headers: {
         Accept: 'application/json'
       },
-      timeout: 5000
+      timeout: 10000
     });
   }
   catch (e) {

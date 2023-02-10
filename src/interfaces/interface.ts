@@ -10,7 +10,7 @@ export class MARKET_DATA {
   lastUpdatedTimestamp: number;
 }
 
-export class SUPPLY_INFO {
+export class SUPPLY_DATA {
   circulatingSupply: number;
   maxSupply: number;
   lastUpdatedDate: string;
@@ -22,7 +22,7 @@ export class SUPPLY_INFO {
   }
 }
 
-export class LIQUIDITY_INFO {
+export class LIQUIDITY_DATA {
   erc20: number;
   reserve_value: number;
   maxSupply: number;

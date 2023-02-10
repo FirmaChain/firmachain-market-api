@@ -9,7 +9,8 @@ export async function getPrice(code: string, provider: string) {
     const priceData = await getAxios(COIN_GECKO_URL, path);
     return priceData.data[provider];
   } catch (e) {
-    console.log(e);
+    console.log(`[ERROR] : ${e}`);
+    console.log(`${COIN_GECKO_URL}${path}`);
     throw "could not coingecko price data";
   }
 }

@@ -1,7 +1,8 @@
 import { Injectable } from '@nestjs/common';
+import { InternalServerErrorException } from '@nestjs/common/exceptions';
 import { ConfigService } from '@nestjs/config';
 import { getPrice } from 'src/components/coingecko';
-import { LIQUIDITY_INFO, MARKET_DATA } from 'src/interfaces/interface';
+import { LIQUIDITY_DATA, MARKET_DATA } from 'src/interfaces/interface';
 import { ExistsFile, ReadFile, WriteFile } from 'src/util/file';
 
 @Injectable()
@@ -55,7 +56,7 @@ export class Erc20MarketService {
       return finalDataList;
     } catch (e) {
       console.log("setErc20MarketData - error");
-      return [];
+      return new InternalServerErrorException('[ERROR] FAILED TO CALC THE ERC20 DATA');
     }
   }
 
@@ -72,25 +73,20 @@ export class Erc20MarketService {
         return await this.setMarketData();
       }
     } catch (e) {
-      return [];
+      return e;
     }
   }
 
   async getCirculatingSupply() {
-    try {
-      const isExistsFile = await ExistsFile(this.erc20SupplyFileName);
+    const isExistsFile = await ExistsFile(this.erc20SupplyFileName);
 
-      if (isExistsFile) {
-        const liquidityData = await ReadFile(this.erc20SupplyFileName);
-        const liquidityInfo: LIQUIDITY_INFO = JSON.parse(liquidityData);
+    if (isExistsFile) {
+      const liquidityData = await ReadFile(this.erc20SupplyFileName);
+      const liquidityInfo: LIQUIDITY_DATA = JSON.parse(liquidityData);
 
-        return liquidityInfo;
-      }
-
-      return (new LIQUIDITY_INFO());
-    } catch (e) {
-      console.log(e);
-      return (new LIQUIDITY_INFO());
+      return liquidityInfo;
     }
+
+    return new LIQUIDITY_DATA();
   }
 }

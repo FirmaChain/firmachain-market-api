@@ -1,14 +1,16 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
-import { MainnetMarketService } from 'src/mainnet-market/mainnet-market.service';
+import { ChainMarketService } from 'src/chain-market/chain-market.service';
+import { ChainSupplyService } from 'src/chain-supply/chain-supply.service';
 import { MarketSchedulerService } from './market-scheduler.service';
 
 @Module({
   providers: [
     ConfigService,
     MarketSchedulerService,
-    MainnetMarketService
+    ChainMarketService,
+    ChainSupplyService
   ]
 })
 export class MarketSchedulerModule {}
