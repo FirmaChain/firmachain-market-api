@@ -8,7 +8,6 @@ import { LoggerMiddleware } from './middlewares/LoggerMiddleware';
 import { ChainMarketService } from './chain-market/chain-market.service';
 import { MarketSchedulerModule } from './market-scheduler/market-scheduler.module';
 import { Erc20MarketService } from './erc20-market/erc20-market.service';
-import { ChainSupplyService } from './chain-supply/chain-supply.service';
 
 @Module({
   imports: [
@@ -32,7 +31,6 @@ import { ChainSupplyService } from './chain-supply/chain-supply.service';
   providers: [
     ChainMarketService,
     Erc20MarketService,
-    ChainSupplyService
   ]
 })
 export class AppModule {

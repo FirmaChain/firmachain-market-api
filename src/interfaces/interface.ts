@@ -1,13 +1,15 @@
-export class MARKET_DATA {
+export class CHAIN_DATA {
   symbol: string;
-  currencyCode: string;
-  price: number;
-  marketCap: number;
-  accTradePrice24h: number;
-  circulatingSupply: number;
-  maxSupply: number;
   provider: string;
   lastUpdatedTimestamp: number;
+  currencyDatas: CURRENCY_DATA[];
+}
+
+export class CURRENCY_DATA {
+  currencyCode: string;
+  price: number;
+  accTradePrice24h: number;
+  marketCap?: number;
 }
 
 export class SUPPLY_DATA {
@@ -20,6 +22,18 @@ export class SUPPLY_DATA {
     this.maxSupply = 0;
     this.lastUpdatedDate = "";
   }
+}
+
+export class MARKET_DATA {
+  symbol: string;
+  currencyCode: string;
+  price: number;
+  marketCap: number;
+  accTradePrice24h: number;
+  circulatingSupply: number;
+  maxSupply: number;
+  provider: string;
+  lastUpdatedTimestamp: number;
 }
 
 export class LIQUIDITY_DATA {

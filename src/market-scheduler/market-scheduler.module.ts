@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
 import { ChainMarketService } from 'src/chain-market/chain-market.service';
-import { ChainSupplyService } from 'src/chain-supply/chain-supply.service';
+import { Erc20MarketService } from 'src/erc20-market/erc20-market.service';
+
 import { MarketSchedulerService } from './market-scheduler.service';
 
 @Module({
@@ -10,7 +10,7 @@ import { MarketSchedulerService } from './market-scheduler.service';
     ConfigService,
     MarketSchedulerService,
     ChainMarketService,
-    ChainSupplyService
+    Erc20MarketService
   ]
 })
 export class MarketSchedulerModule {}

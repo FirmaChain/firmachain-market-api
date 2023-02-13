@@ -1,15 +1,11 @@
 import { Controller, Get, HttpCode } from '@nestjs/common';
 
 import { Erc20MarketService } from './erc20-market/erc20-market.service';
-import { ChainMarketService } from './chain-market/chain-market.service';
-import { ChainSupplyService } from './chain-supply/chain-supply.service';
-import { InternalServerErrorException } from '@nestjs/common/exceptions';
+import { CHAIN_DATA, MARKET_DATA, SUPPLY_DATA } from './interfaces/interface';
 
 @Controller('api')
 export class AppController {
   constructor(
-    private readonly chainMarketService: ChainMarketService,
-    private readonly chainSupplyService: ChainSupplyService,
     private readonly erc20MarketService: Erc20MarketService
   ) {}
 
@@ -21,41 +17,48 @@ export class AppController {
 
   @Get('mainnet/refresh-data')
   async refreshMainnetData() {
-    try {
-      return await this.chainMarketService.setMarketData();
-    } catch (e) {
-      return e.response;
-    }
+    
   }
 
   @HttpCode(200)
   @Get('mainnet/info')
   async getMainnetData() {
-    try {
-      return await this.chainMarketService.getMarketData();
-    } catch (e) {
-      return e.response;
+    const chainData: CHAIN_DATA = global.chainData;
+    const supplyData: SUPPLY_DATA = global.supplyData;
+
+    const marketData: MARKET_DATA[] = [];
+
+    for (let i = 0; i < chainData.currencyDatas.length; i++) {
+      const currencyData = chainData.currencyDatas[i];
+      
+      marketData.push({
+        symbol: chainData.symbol,
+        currencyCode: currencyData.currencyCode,
+        price: currencyData.price,
+        marketCap: currencyData.price * supplyData.circulatingSupply,
+        accTradePrice24h: currencyData.accTradePrice24h,
+        circulatingSupply: supplyData.circulatingSupply,
+        maxSupply: supplyData.maxSupply,
+        provider: chainData.provider,
+        lastUpdatedTimestamp: chainData.lastUpdatedTimestamp
+      })
     }
+
+    return marketData;
   }
 
   @HttpCode(200)
   @Get('mainnet/info/circulating-supply')
   async getMainnetSupplyData() {
-    try {
-      return (await this.chainSupplyService.getSupplyData()).circulatingSupply;
-    } catch (e) {
-      return e.response;
-    }
+    const supplyData: SUPPLY_DATA = global.supplyData;
+    return supplyData.circulatingSupply;
   }
 
   @HttpCode(200)
   @Get('mainnet/info/total-supply')
   async getMainnetMaxSupplyData() {
-    try {
-      return (await this.chainSupplyService.getSupplyData()).maxSupply;
-    } catch (e) {
-      return e.response;
-    }
+    const supplyData: SUPPLY_DATA = global.supplyData;
+    return supplyData.maxSupply;
   }
 
   @HttpCode(200)

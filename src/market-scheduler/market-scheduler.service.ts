@@ -1,19 +1,20 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-
 import { ChainMarketService } from 'src/chain-market/chain-market.service';
+import { Erc20MarketService } from 'src/erc20-market/erc20-market.service';
 
 @Injectable()
 export class MarketSchedulerService {
   private chainInterval: NodeJS.Timer = null;
   private erc20Interval: NodeJS.Timer = null;
-  
+
   private chainIntervalTime: number = 0;
   private erc20IntervalTime: number = 0;
 
   constructor(
+    private readonly configService: ConfigService,
     private readonly chainMarketService: ChainMarketService,
-    private readonly configService: ConfigService
+    private readonly erc20MarketService: Erc20MarketService
   ) {
     console.log("✅ START MARKET SERVICE ✅");
 
@@ -29,7 +30,12 @@ export class MarketSchedulerService {
       try {
         console.log("🟦 START SCHEDULE - Mainnet 🟦");
 
-        await this.chainMarketService.setMarketData();
+        const chainData = await this.chainMarketService.setChainData();
+        const supplyData = await this.chainMarketService.setSupplyData();
+
+        global.chainData = chainData;
+        global.supplyData = supplyData;
+
       } catch (e) {
         console.log(e);
       }
@@ -41,7 +47,7 @@ export class MarketSchedulerService {
       try {
         console.log("🟫 START SCHEDULE - Erc20 🟫");
 
-        // await this.marketDataService.setMainnetMarketData();
+        await this.erc20MarketService.setMarketData();
       } catch (e) {
         console.log(e);
       }
