@@ -41,7 +41,7 @@ export class AppController {
         maxSupply: supplyData.maxSupply,
         provider: chainData.provider,
         lastUpdatedTimestamp: chainData.lastUpdatedTimestamp
-      })
+      });
     }
 
     return marketData;

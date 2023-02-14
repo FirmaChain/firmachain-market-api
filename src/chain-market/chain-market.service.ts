@@ -83,6 +83,8 @@ export class ChainMarketService {
 
 				return supplyData;
 			}
+
+			return originSupplyData;
 		} catch (e) {
 			console.log(`[ERROR] - setSupplyData`);
 			throw e.response;
