@@ -4,8 +4,9 @@ import moment from 'moment';
 
 import { getPrice } from 'src/components/coingecko';
 import { CHAIN_DATA, SUPPLY_DATA } from 'src/interfaces/interface';
-import { getAxios } from 'src/util/axios';
-import { ExistsFile, ReadFile, WriteFile } from 'src/util/file';
+import { getAxios } from 'src/util/axios.util';
+import { ExistsFile, ReadFile, WriteFile } from 'src/util/file.util';
+import { winstonLogger } from 'src/util/winston.util';
 import account from '../account.json';
 
 @Injectable()
@@ -67,7 +68,7 @@ export class ChainMarketService {
 
 			return chainData;
 		} catch (e) {
-			console.log(`[ERROR] - setChainData`);
+			winstonLogger.error(`[ERROR] - setChainData || ${e}`)
 			throw new InternalServerErrorException("Failed while configuring chain data");
 		}
 	}
@@ -86,7 +87,7 @@ export class ChainMarketService {
 
 			return originSupplyData;
 		} catch (e) {
-			console.log(`[ERROR] - setSupplyData`);
+			winstonLogger.error(`[ERROR] - setSupplyData || ${e}`);
 			throw e.response;
 		}
 	}
@@ -107,7 +108,8 @@ export class ChainMarketService {
 
 	private async updateSupplyData() {
 		try {
-			console.log("[INFO] - updateSupplyData");
+			winstonLogger.log(`[INFO] - updateSupplyData`);
+
 			const newCalcSupplyData = await this.calcSupplyData();
 			const timerDate = moment(new Date()).utcOffset(540);
 			const nowSupplyDate = timerDate.format('YYYYMMDD');
@@ -122,7 +124,7 @@ export class ChainMarketService {
 
 			return supplyData;
 		} catch (e) {
-			console.log(`[ERROR] - updateSupplyData`);
+			winstonLogger.error(`[ERROR] - updateSupplyData || ${e}`);
 			throw e.response;
 		}
 	}
@@ -182,7 +184,7 @@ export class ChainMarketService {
 				circulatingSupply,
 			};
 		} catch (e) {
-			console.log(e);
+			winstonLogger.error(e);
 			throw new InternalServerErrorException('[ERROR] FAILED TO CALC THE SUPPLY DATA');
 		}
 	}

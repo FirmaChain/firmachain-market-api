@@ -3,7 +3,8 @@ import { InternalServerErrorException } from '@nestjs/common/exceptions';
 import { ConfigService } from '@nestjs/config';
 import { getPrice } from 'src/components/coingecko';
 import { LIQUIDITY_DATA, MARKET_DATA } from 'src/interfaces/interface';
-import { ExistsFile, ReadFile, WriteFile } from 'src/util/file';
+import { ExistsFile, ReadFile, WriteFile } from 'src/util/file.util';
+import { winstonLogger } from 'src/util/winston.util';
 
 @Injectable()
 export class Erc20MarketService {
@@ -55,7 +56,7 @@ export class Erc20MarketService {
 
       return finalDataList;
     } catch (e) {
-      console.log("setErc20MarketData - error");
+      winstonLogger.error(`setErc20MarketData - error || ${e}`);
       return new InternalServerErrorException('[ERROR] FAILED TO CALC THE ERC20 DATA');
     }
   }

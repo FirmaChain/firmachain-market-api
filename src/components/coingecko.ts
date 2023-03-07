@@ -1,4 +1,5 @@
-import { getAxios } from "../util/axios";
+import { winstonLogger } from "src/util/winston.util";
+import { getAxios } from "../util/axios.util";
 
 const COIN_GECKO_URL: string = 'https://api.coingecko.com/api/v3';
 
@@ -9,8 +10,7 @@ export async function getPrice(code: string, provider: string) {
     const priceData = await getAxios(COIN_GECKO_URL, path);
     return priceData.data[provider];
   } catch (e) {
-    console.log(`[ERROR] : ${e}`);
-    console.log(`${COIN_GECKO_URL}${path}`);
+    winstonLogger.error(`[ERROR] - ${COIN_GECKO_URL}${path} || ${e}`);
     throw "could not coingecko price data";
   }
 }

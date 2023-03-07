@@ -11,11 +11,15 @@ function createAxios(url: string) {
     });
   }
   catch (e) {
-    console.log(e);
+    throw e;
   }
 }
 
 export async function getAxios(url: string, path: string) {
-  const _axios = createAxios(url);
-  return await _axios.get(path);
+  try {
+    const _axios = createAxios(url);
+    return await _axios.get(path);
+  } catch (e) {
+    throw e;
+  }
 }

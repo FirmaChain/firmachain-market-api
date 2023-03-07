@@ -10,7 +10,7 @@ import { MarketSchedulerService } from './market-scheduler.service';
     ConfigService,
     MarketSchedulerService,
     ChainMarketService,
-    Erc20MarketService
+    Erc20MarketService,
   ]
 })
 export class MarketSchedulerModule {}

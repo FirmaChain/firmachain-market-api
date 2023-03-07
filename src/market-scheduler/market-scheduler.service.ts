@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ChainMarketService } from 'src/chain-market/chain-market.service';
 import { Erc20MarketService } from 'src/erc20-market/erc20-market.service';
+import { winstonLogger } from 'src/util/winston.util';
 
 @Injectable()
 export class MarketSchedulerService {
@@ -16,7 +17,7 @@ export class MarketSchedulerService {
     private readonly chainMarketService: ChainMarketService,
     private readonly erc20MarketService: Erc20MarketService
   ) {
-    console.log("✅ START MARKET SERVICE ✅");
+    winstonLogger.log(`START MARKET SERVICE`);
 
     this.chainIntervalTime = this.configService.get("CHAIN_INTERVAL_TIME");
     this.erc20IntervalTime = this.configService.get("ERC20_INTERVAL_TIME");
@@ -28,7 +29,7 @@ export class MarketSchedulerService {
   startChainInterval() {
     this.chainInterval = setInterval(async () => {
       try {
-        console.log("🟦 START SCHEDULE - Mainnet 🟦");
+        winstonLogger.log(`🟦 START SCHEDULE - Mainnet (${new Date()}) 🟦`);
 
         const chainData = await this.chainMarketService.setChainData();
         const supplyData = await this.chainMarketService.setSupplyData();
@@ -37,7 +38,7 @@ export class MarketSchedulerService {
         global.supplyData = supplyData;
 
       } catch (e) {
-        console.log(e);
+        winstonLogger.error(e);
       }
     }, this.chainIntervalTime * 1000);
   }
@@ -45,11 +46,11 @@ export class MarketSchedulerService {
   startErc20SupplyInterval() {
     this.erc20Interval = setInterval(async () => {
       try {
-        console.log("🟫 START SCHEDULE - Erc20 🟫");
+        winstonLogger.log(`🟫 START SCHEDULE - Erc20 (${new Date()}) 🟫`);
 
         await this.erc20MarketService.setMarketData();
       } catch (e) {
-        console.log(e);
+        winstonLogger.error(e);
       }
     }, this.erc20IntervalTime * 1000);
   }
